@@ -1,0 +1,27 @@
+{
+  "student": {
+    "rollNumber": "DTQ-2026-001",
+    "admissionNumber": "ADM-2026-001",
+    "name": "Ayaan Ahmad",
+    "nameUrdu": "ایان احمد",
+    "fatherName": "Bilal Ahmad",
+    "className": "Hifz Preparatory",
+    "section": "A",
+    "dateOfBirth": "2014-04-12",
+    "contact": "+91 70000 00001",
+    "address": "Kongamdara Pattan"
+  },
+  "marks": [
+    { "subject": "Quran Nazra", "term": "Term 1", "obtainedMarks": 92, "maxMarks": 100 },
+    { "subject": "Hadees", "term": "Term 1", "obtainedMarks": 86, "maxMarks": 100 },
+    { "subject": "Fiqh", "term": "Term 1", "obtainedMarks": 78, "maxMarks": 100 },
+    { "subject": "Tajweed", "term": "Term 1", "obtainedMarks": 95, "maxMarks": 100 }
+  ],
+  "result": {
+    "total": 351,
+    "maxMarks": 400,
+    "percentage": 88,
+    "grade": "A",
+    "status": "Pass"
+  }
+}

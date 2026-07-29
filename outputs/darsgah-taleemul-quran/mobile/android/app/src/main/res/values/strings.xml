@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Darsgah Kongamdara</string>
+    <string name="title_activity_main">Darsgah Kongamdara</string>
+    <string name="package_name">com.darsgah.kongamdara</string>
+    <string name="custom_url_scheme">com.darsgah.kongamdara</string>
+</resources>

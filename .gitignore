@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+.next/
+**/.next/
+dist/
+build/
+out/
+coverage/
+**/android/app/build/
+**/android/build/
+**/.gradle/
+**/android/app/src/main/assets/public/
+**/android/app/src/main/assets/capacitor.config.json
+**/android/app/src/main/assets/capacitor.plugins.json
+**/android/app/src/main/res/xml/config.xml
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment and local config
+.env
+.env.*
+!.env.example
+local.properties
+**/local.properties
+.vercel/
+**/.vercel/
+
+# Secrets and signing keys
+*.jks
+*.keystore
+keystore.properties
+**/keystore.properties
+google-services.json
+
+# Generated mobile release artifacts
+*.aab
+*.ap_
+*.aar
+
+# Keep the public website APK download, ignore other APKs
+*.apk
+!outputs/darsgah-taleemul-quran/frontend-next/public/downloads/DarsgahKongamdara.apk
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Temporary Codex / generated folders
+.agents/
+.codex/
