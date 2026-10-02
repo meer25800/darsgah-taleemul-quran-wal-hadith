@@ -137,5 +137,5 @@ export async function adminGradeCard(req, res) {
 export async function adminIdCard(req, res) {
   const student = await Student.findById(req.params.id);
   if (!student) return res.status(404).json({ message: "Student not found" });
-  await idCardPdf(student, res);
+  await idCardPdf(student, res, { layout: req.query.layout });
 }

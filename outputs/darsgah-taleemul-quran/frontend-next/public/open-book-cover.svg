@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900" role="img" aria-labelledby="title description">
+  <title id="title">Open Quran book</title>
+  <desc id="description">An elegant open book on a green Islamic patterned background.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ecfbf4"/>
+      <stop offset="1" stop-color="#ccefe0"/>
+    </linearGradient>
+    <linearGradient id="pageLeft" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e6f5ed"/>
+    </linearGradient>
+    <linearGradient id="pageRight" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e6f5ed"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="24" stdDeviation="22" flood-color="#06472f" flood-opacity=".22"/>
+    </filter>
+    <pattern id="pattern" width="120" height="120" patternUnits="userSpaceOnUse">
+      <path d="M60 8 112 60 60 112 8 60Z" fill="none" stroke="#16845b" stroke-width="2"/>
+      <path d="M60 30 90 60 60 90 30 60Z" fill="none" stroke="#d6aa2f" stroke-width="2"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="900" fill="url(#background)"/>
+  <rect width="1200" height="900" fill="url(#pattern)" opacity=".12"/>
+  <circle cx="600" cy="435" r="310" fill="#ffffff" opacity=".58"/>
+  <g filter="url(#shadow)">
+    <path d="M168 650 600 748 1032 650 960 598 600 682 240 598Z" fill="#b8871f"/>
+    <path d="M220 610 600 700 980 610 924 558 600 638 276 558Z" fill="#8f4e2b"/>
+    <path d="M600 655c-84-82-211-124-365-121V262c154-3 281 40 365 124Z" fill="url(#pageLeft)" stroke="#0d5c3d" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M600 655c84-82 211-124 365-121V262c-154-3-281 40-365 124Z" fill="url(#pageRight)" stroke="#0d5c3d" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M600 386v269" fill="none" stroke="#d6aa2f" stroke-width="12" stroke-linecap="round"/>
+    <path d="M600 400c-79-66-190-102-322-101M600 445c-79-66-190-102-322-101M600 490c-79-66-190-102-322-101M600 535c-79-66-190-102-322-101" fill="none" stroke="#16845b" stroke-width="8" stroke-linecap="round" opacity=".36"/>
+    <path d="M600 400c79-66 190-102 322-101M600 445c79-66 190-102 322-101M600 490c79-66 190-102 322-101M600 535c79-66 190-102 322-101" fill="none" stroke="#16845b" stroke-width="8" stroke-linecap="round" opacity=".36"/>
+  </g>
+</svg>

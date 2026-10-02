@@ -45,5 +45,5 @@ export async function childGradeCard(req, res) {
 
 export async function childIdCard(req, res) {
   const student = await linkedChild(req, res);
-  if (student) await idCardPdf(student, res);
+  if (student) await idCardPdf(student, res, { layout: req.query.layout });
 }

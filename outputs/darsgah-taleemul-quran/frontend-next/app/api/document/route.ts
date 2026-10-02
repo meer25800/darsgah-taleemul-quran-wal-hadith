@@ -20,23 +20,38 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const upstream = await fetch(target, { cache: "no-store" });
+    const range = req.headers.get("range");
+    const upstream = await fetchSafeDocument(target, range);
     if (!upstream.ok || !upstream.body) {
       return NextResponse.json({ message: "Document is not available" }, { status: upstream.status || 404 });
     }
 
     const contentType = upstream.headers.get("content-type") || contentTypeFromUrl(target);
+    if (!isSupportedContentType(contentType)) {
+      return NextResponse.json({ message: "Unsupported document type" }, { status: 415 });
+    }
+    const contentLength = Number(upstream.headers.get("content-length") || 0);
+    if (contentLength > 50 * 1024 * 1024) {
+      return NextResponse.json({ message: "Document is too large to proxy" }, { status: 413 });
+    }
     const extension = extensionFromContentType(contentType) || extensionFromUrl(target);
     const filename = `${title}${extension && !title.toLowerCase().endsWith(extension) ? extension : ""}`;
+    const headers = new Headers({
+      "Content-Type": contentType,
+      "Content-Disposition": `${download ? "attachment" : "inline"}; filename="${filename}"`,
+      "Cache-Control": "private, max-age=60",
+      "Cross-Origin-Resource-Policy": "cross-origin",
+      "X-Content-Type-Options": "nosniff",
+      "Accept-Ranges": upstream.headers.get("accept-ranges") || "bytes"
+    });
+    ["content-length", "content-range", "last-modified", "etag"].forEach((name) => {
+      const value = upstream.headers.get(name);
+      if (value) headers.set(name, value);
+    });
 
     return new NextResponse(upstream.body, {
-      status: 200,
-      headers: {
-        "Content-Type": contentType,
-        "Content-Disposition": `${download ? "attachment" : "inline"}; filename="${filename}"`,
-        "Cache-Control": "private, max-age=60",
-        "X-Content-Type-Options": "nosniff"
-      }
+      status: upstream.status,
+      headers
     });
   } catch (error) {
     console.error("Document proxy failed:", error);
@@ -85,10 +100,38 @@ function extensionFromUrl(url: string) {
   return match ? `.${match[1].toLowerCase().replace("jpeg", "jpg")}` : "";
 }
 
+function isSupportedContentType(value: string) {
+  const normalized = value.toLowerCase();
+  return normalized.includes("application/pdf")
+    || normalized.includes("image/png")
+    || normalized.includes("image/jpeg")
+    || normalized.includes("image/webp")
+    || normalized.includes("application/octet-stream");
+}
+
 function apiOriginHost() {
   try {
     return new URL(API_ORIGIN).hostname;
   } catch {
     return "";
   }
+}
+
+async function fetchSafeDocument(initialUrl: string, range: string | null) {
+  let current = initialUrl;
+  for (let redirects = 0; redirects <= 3; redirects += 1) {
+    const response = await fetch(current, {
+      cache: "no-store",
+      headers: range ? { Range: range } : undefined,
+      redirect: "manual",
+      signal: AbortSignal.timeout(20_000)
+    });
+    if (![301, 302, 303, 307, 308].includes(response.status)) return response;
+    const location = response.headers.get("location");
+    if (!location) return response;
+    const next = normalizeDocumentUrl(new URL(location, current).toString());
+    if (!next) throw new Error("Document redirect was blocked");
+    current = next;
+  }
+  throw new Error("Too many document redirects");
 }

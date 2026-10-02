@@ -4,7 +4,7 @@ import User from "../models/User.js";
 export async function protect(req, res, next) {
   try {
     const header = req.headers.authorization || "";
-    const token = header.startsWith("Bearer ") ? header.slice(7) : null;
+    const token = header.startsWith("Bearer ") ? header.slice(7) : req.cookies?.darsgah_token;
     if (!token) return res.status(401).json({ message: "Authentication required" });
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id).select("-password");

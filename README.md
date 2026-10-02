@@ -27,16 +27,43 @@ This is not just a landing page. It is a working institute-management system des
 - Islamic AI assistant powered through secure server-side API integration
 - Premium Islamic-themed UI using green, white, sky-blue, and gold styling
 
-## 🧭 Demo Accounts
+## 🎓 What Was Built
 
-> Demo credentials are for testing the deployed sample portal only. Change them before real production use.
+This project brings the institute's public information and day-to-day academic workflows into one responsive platform. It includes a public website, four role-based portals, a document library, server APIs, and an Android application wrapper.
 
-| Role | Login | Password |
-| --- | --- | --- |
-| Admin | `aamirmir08@gmail.com` | `admin123` |
-| Student | `dtq-2026-001` | `student123` |
-| Faculty | `faculty` | `faculty123` |
-| Parent | `parent` | `parent123` |
+### Public website
+
+- Institute profile, admissions information, contact and location links
+- Books, learning resources, syllabus documents, notices, events, gallery and institute videos
+- Responsive navigation, privacy information, downloadable Android app and Islamic Assistant entry point
+- PDF reading and download flows designed for desktop browsers, mobile browsers and the Android app
+
+### Student and family services
+
+- Student profiles, class information, marks, attendance, notices and syllabus access
+- Parent portal scoped to linked student records
+- Downloadable grade cards and student ID cards
+- Faculty tools for assigned classes, attendance and marks
+
+### Administration
+
+- Admin-managed students, parents, faculty, classes, timetable, fees, admissions and academic results
+- Content management for books, resources, notices, events, gallery images and institute videos
+- File upload validation, document metadata handling and institute configuration
+- Email OTP support when Gmail SMTP settings are configured
+
+### Learning and mobile access
+
+- Islamic digital library with searchable resource cards and an in-app PDF reader
+- Server-side grade-card and ID-card PDF generation
+- Capacitor Android project with native document download and PDF viewing support
+- Islamic Assistant integration through a server-side API route, with scope and rate-limit controls
+
+## 🔒 Demo Access and Production Setup
+
+Demo credentials are intentionally not published in this README. Configure account data and secrets in your local or hosting environment, and change any seed passwords before using real student information. Never commit `.env` files, database connection strings, email app passwords, API keys, signing keys or real student records to a public repository.
+
+The live website is a demonstration deployment. Production login and data features require the API, MongoDB connection, email service and any configured file storage to be available and correctly set up.
 
 ## 🛠 Tech Stack
 
@@ -46,19 +73,20 @@ This is not just a landing page. It is a working institute-management system des
 | Backend | Node.js, Express.js |
 | Database | MongoDB Atlas, Mongoose |
 | Auth | JWT, bcrypt |
-| PDFs | PDFKit / React PDF patterns |
+| PDFs | PDFKit and dedicated document rendering |
 | Mobile | Capacitor Android |
 | Hosting | Vercel frontend + Vercel/Node API |
 | AI Assistant | Groq SDK through server-side API route |
 
-## 🧩 Main Modules
+## 🧩 Main Modules and Workflows
 
-- **Public Website:** Home, About, Admissions, Books, Resources, Gallery, Notices, Events, Videos, Contact, Donate, FAQ-ready sections
-- **Admin ERP:** Students, parents, faculty, classes, timetable, syllabus, fees, attendance, results, admissions, announcements, gallery, videos, login management
-- **Faculty Portal:** Assigned classes, student lists, attendance workflow, marks entry, class-wise views
-- **Student Portal:** Profile, marks, attendance, syllabus, resources, notices, grade card, ID card
-- **Parent Portal:** Linked child dashboard, marks, attendance, fee status, syllabus, notices, quick downloads
-- **Android App:** Lightweight app wrapper connected to the deployed website
+- **Public Website:** Home, institute profile, admissions, books, resources, gallery, notices, events, videos, contact and privacy pages
+- **Admin ERP:** Student and family records, faculty, classes, timetable, syllabus, fees, attendance, results, admissions and public content
+- **Faculty Portal:** Assigned class access, student lists, attendance entry and marks management
+- **Student Portal:** Student profile, marks, attendance, syllabus, learning resources, notices and document downloads
+- **Parent Portal:** Linked-child information, academic progress, attendance, fee status, notices and downloads
+- **Digital Library:** Categorized Islamic learning content, document availability states, PDF viewing and downloads
+- **Android App:** Capacitor-based Android packaging with native support for document downloads and opening PDFs
 
 ## 📁 Repository Structure
 
@@ -138,17 +166,9 @@ ISLAMIC_ASSISTANT_DAILY_LIMIT=50
 - **Files:** Cloudinary-ready upload layer
 - **APK:** Free direct download through the website
 
-## 🧪 Quality Checks
+## 🧪 Development and Verification
 
-The deployed build has been checked for:
-
-- Production Next.js build
-- API health
-- Admin/student/faculty/parent login flow
-- Gmail OTP delivery
-- APK generation
-- Public APK download route
-- Privacy policy route
+The repository includes the frontend, backend, Android wrapper, sample library documents and deployment configuration. Build and runtime checks should be run in the environment where the required Node.js version and service credentials are configured. A successful frontend build alone does not verify database connectivity, email delivery, external file storage or Android device behaviour.
 
 ## 🤝 For Developers
 
@@ -161,7 +181,7 @@ This project is useful if you are exploring:
 - Android packaging for a web portal using Capacitor
 - Secure server-side AI assistant integration
 
-If you find this project useful, ⭐ star the repo and explore the live demo.
+If you find this project useful, explore the live demo and star the repository.
 
 ---
 

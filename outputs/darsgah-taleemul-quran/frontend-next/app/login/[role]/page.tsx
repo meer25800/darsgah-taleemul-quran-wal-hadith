@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Lock, UserRound } from "lucide-react";
@@ -9,6 +8,7 @@ import { api } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { LogoBadge } from "@/components/LogoBadge";
 
 const defaultUsernames: Record<string, string> = {
   admin: "aamirmir08@gmail.com",
@@ -38,8 +38,8 @@ export default function LoginPage() {
       const user = await login(username, password, role);
       const dashboardRole = user.role === "super_admin" ? "admin" : user.role;
       router.push(`/dashboard/${dashboardRole}`);
-    } catch {
-      setError("Invalid credentials or server unavailable.");
+    } catch (err: any) {
+      setError(err?.response?.data?.message || err?.message || "Invalid credentials or server unavailable.");
     }
   }
 
@@ -84,7 +84,7 @@ export default function LoginPage() {
   return (
     <main className="islamic-pattern grid min-h-[calc(100vh-78px)] place-items-center px-4 py-10">
       <Card className="w-full max-w-md text-center">
-        <Image src="/institute-logo.png" alt="Institute logo" width={112} height={112} className="mx-auto rounded-full border-4 border-gold" />
+        <LogoBadge size={112} priority className="mx-auto h-28 w-28" />
         <p className="mt-4 text-sm font-bold text-palm">DARSGAH TALEEMUL QURAN WAL HADITH</p>
         <h1 className="mt-2 text-3xl font-black capitalize">{role} Login</h1>
         {error && <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}

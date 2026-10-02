@@ -3,6 +3,7 @@ import fs from "fs";
 import mongoose from "mongoose";
 import path from "path";
 import PDFDocument from "pdfkit";
+import { PDFDocument as PDFLibDocument } from "pdf-lib";
 import User from "./models/User.js";
 import Student from "./models/Student.js";
 import Parent from "./models/Parent.js";
@@ -33,7 +34,22 @@ function createPdf(filename, title, description, lines = []) {
     const filePath = path.join(libraryDir, filename);
     const doc = new PDFDocument({ margin: 54 });
     const stream = fs.createWriteStream(filePath);
-    stream.on("finish", () => resolve(`/uploads/library/${filename}`));
+    stream.on("finish", async () => {
+      try {
+        const bytes = await fs.promises.readFile(filePath);
+        const parsed = await PDFLibDocument.load(bytes);
+        resolve({
+          fileUrl: `/uploads/library/${filename}`,
+          pageCount: parsed.getPageCount(),
+          fileSizeBytes: bytes.length,
+          mimeType: "application/pdf",
+          originalFilename: filename,
+          fileAvailable: true
+        });
+      } catch (error) {
+        reject(error);
+      }
+    });
     stream.on("error", reject);
     doc.pipe(stream);
     doc.fillColor("#075e45").fontSize(18).text("DARSGAH TALEEMUL QURAN WAL HADITH", { align: "center" });
@@ -196,8 +212,9 @@ const bookSeed = [
 ];
 
 const booksWithFiles = await Promise.all(bookSeed.map(async (book) => {
-  const fileUrl = await createPdf(`${slugFile(book.title)}.pdf`, book.title, book.description, book.contents);
-  return { ...book, coverUrl: "/institute-logo.png", thumbnailUrl: "/institute-logo.png", previewUrl: fileUrl, fileUrl, fileSize: `${Math.max(1, Math.round(book.pages / 8))} MB`, views: 0, downloads: 0, isPublic: true };
+  const document = await createPdf(`${slugFile(book.title)}.pdf`, book.title, book.description, book.contents);
+  const { pages: _unsupportedPageClaim, ...verifiedBook } = book;
+  return { ...verifiedBook, ...document, previewUrl: document.fileUrl, views: 0, downloads: 0, isPublic: true };
 }));
 await Book.insertMany(booksWithFiles);
 
@@ -214,16 +231,15 @@ const resourceDocs = [];
 for (const [category, titles] of Object.entries(resourceTitles)) {
   for (const title of titles) {
     const fullTitle = category === "Tajweed" && title === "Makharij Chart" ? "Tajweed Makharij Chart" : title;
-    const fileUrl = await createPdf(`${slugFile(category)}_${slugFile(title)}.pdf`, fullTitle, `${fullTitle} for ${category} revision, classroom practice, and student self-study.`, ["Read carefully", "Revise with teacher", "Complete practice work", "Discuss doubts in class"]);
+    const description = `${fullTitle} for ${category} revision and guided classroom practice.`;
+    const document = await createPdf(`${slugFile(category)}_${slugFile(title)}.pdf`, fullTitle, description, ["Read with your teacher", "Revise the lesson", "Complete the practice work"]);
     resourceDocs.push({
       title: fullTitle,
       category,
-      description: `${fullTitle} prepared for institute students with clear revision points and practice guidance.`,
-      thumbnailUrl: "/institute-logo.png",
-      previewUrl: fileUrl,
-      fileUrl,
-      fileType: title.toLowerCase().includes("chart") ? "image" : "pdf",
-      fileSize: "1 MB",
+      description,
+      ...document,
+      previewUrl: document.fileUrl,
+      fileType: "pdf",
       uploadedBy: "Institute Admin",
       uploadDate: new Date(),
       views: 0,
@@ -270,7 +286,7 @@ for (let index = 0; index < classNames.length; index++) {
     "Term 2: revision, oral tests, worksheets, assignments, and practice questions",
     "Includes worksheets, assignments, videos, practice questions, and revision notes"
   ];
-  const url = await createPdf(`${slugFile(className)}_Syllabus.pdf`, `${className} Syllabus`, `Complete syllabus for ${className}.`, topics);
+  const document = await createPdf(`${slugFile(className)}_Syllabus.pdf`, `${className} Syllabus`, `Complete syllabus for ${className}.`, topics);
   syllabusDocs.push({
     title: `${className} Islamic Studies Syllabus`,
     className,
@@ -280,7 +296,7 @@ for (let index = 0; index < classNames.length; index++) {
     category: "Quran",
     description: `Complete syllabus for ${className}: Quran, Tajweed, Arabic, Fiqh, Hadees, Duas, Seerah, Islamic Manners, worksheets, assignments, videos, practice questions, revision notes, Term 1 topics and Term 2 topics.`,
     type: "pdf",
-    file: { url, originalName: `${className}-syllabus.pdf`, mimeType: "application/pdf" },
+    file: { url: document.fileUrl, originalName: `${className}-syllabus.pdf`, mimeType: "application/pdf", size: document.fileSizeBytes },
     isPublic: true
   });
 }
@@ -309,7 +325,17 @@ await Timetable.insertMany(classNames.map((className, index) => ({
 
 await Announcement.create({ title: "ERP Portal Ready", body: "Live dashboards are available for admin, faculty, students and parents.", audience: "all", priority: "high" });
 await Setting.create([
-  { key: "institute", value: { name: "DARSGAH TALEEMUL QURAN WAL HADITH", location: "Kongamdara Pattan", classes: classNames } },
+  {
+    key: "institute",
+    value: {
+      name: "DARSGAH TALEEMUL QURAN WAL HADITH",
+      location: "Kongamdara Pattan, Jammu & Kashmir",
+      phone: "+919906237556",
+      mapUrl: "https://www.google.com/maps/place/34%C2%B007'04.8%22N+74%C2%B035'12.4%22E/@34.1182154,74.5868014,19z/data=!4m4!3m3!8m2!3d34.1179956!4d74.5867706?entry=ttu&g_ep=EgoyMDI2MDcyMi4wIKXMDSoASAFQAw%3D%3D",
+      mapEmbedUrl: "https://www.google.com/maps?q=34.1179956,74.5867706&z=18&output=embed",
+      classes: classNames
+    }
+  },
   {
     key: "islamicAssistant",
     value: {

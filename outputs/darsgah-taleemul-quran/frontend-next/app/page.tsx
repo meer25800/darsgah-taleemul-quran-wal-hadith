@@ -6,6 +6,8 @@ import { GalleryLightbox } from "@/components/GalleryLightbox";
 import { VideoEmbedCard } from "@/components/VideoEmbedCard";
 import { IslamicAssistantChat } from "@/components/IslamicAssistantChat";
 import { assetUrl } from "@/lib/assets";
+import { DocumentCard } from "@/components/DocumentCard";
+import { LogoBadge } from "@/components/LogoBadge";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -17,32 +19,41 @@ async function getHome() {
     return { notices: [], books: [], resources: [], gallery: [], videos: [], events: [], faculty: [], syllabus: [] };
   }
 }
-
 export default async function HomePage() {
   const home = await getHome();
+  const institute = {
+    phone: home.institute?.phone || "+919906237556",
+    location: home.institute?.location || "Kongamdara Pattan, Jammu & Kashmir",
+    mapUrl:
+      home.institute?.mapUrl ||
+      "https://www.google.com/maps/place/34%C2%B007'04.8%22N+74%C2%B035'12.4%22E/@34.1182154,74.5868014,19z/data=!4m4!3m3!8m2!3d34.1179956!4d74.5867706?entry=ttu&g_ep=EgoyMDI2MDcyMi4wIKXMDSoASAFQAw%3D%3D",
+    mapEmbedUrl:
+      home.institute?.mapEmbedUrl ||
+      "https://www.google.com/maps?q=34.1179956,74.5867706&z=18&output=embed"
+  };
   return (
     <main>
       <section className="islamic-pattern bg-gradient-to-br from-emerald-50 via-white to-sky-50">
-        <div className="mx-auto grid min-h-[calc(100vh-78px)] max-w-7xl items-center gap-10 px-4 py-12 lg:grid-cols-[.8fr_1.2fr]">
-          <Card className="mx-auto max-w-sm text-center">
-            <Image src="/institute-logo.png" alt="Institute logo" width={250} height={250} priority className="mx-auto rounded-full border-8 border-skySeal/30" />
-            <p className="mt-5 text-xl font-bold text-palm">الرَّحْمَٰنُ عَلَّمَ الْقُرْآنَ</p>
-          </Card>
-          <div>
+        <div className="mx-auto grid min-h-[min(760px,calc(100svh-61px))] max-w-7xl items-center gap-8 px-3 py-8 sm:px-4 sm:py-12 lg:grid-cols-[.72fr_1.28fr]">
+          <div className="mx-auto text-center">
+            <LogoBadge size={280} priority className="h-44 w-44 shadow-soft sm:h-60 sm:w-60 lg:h-64 lg:w-64" />
+            <p className="mt-4 text-lg font-bold text-palm sm:text-xl">الرَّحْمَٰنُ عَلَّمَ الْقُرْآنَ</p>
+          </div>
+          <div className="min-w-0">
             <p className="mb-3 text-2xl font-bold text-palm">Darsgah Taleemul Quran Wal Hadith</p>
-            <h1 className="text-4xl font-black leading-tight text-emeraldInk md:text-6xl">DARSGAH TALEEMUL QURAN WAL HADITH KONGAMDARA PATTAN</h1>
+            <h1 className="text-balance text-[clamp(2rem,5vw,4rem)] font-black leading-[1.08] text-emeraldInk">DARSGAH TALEEMUL QURAN WAL HADITH KONGAMDARA PATTAN</h1>
             <p className="mt-4 inline-flex items-center rounded-full border border-skySeal/20 bg-white px-5 py-2 text-sm font-bold uppercase tracking-wide text-skySeal shadow-soft">Kongamdara Pattan</p>
-            <p className="mt-5 max-w-2xl text-lg text-emerald-900/75">A live institute portal for admissions, students, parents, faculty, attendance, marks, books, notices, grade cards, ID cards, and Islamic learning resources.</p>
-            <form action="/search" className="mt-6 flex max-w-xl gap-2 rounded-full border bg-white p-2 shadow-soft">
+            <p className="mt-5 max-w-2xl text-base text-emerald-900/75 sm:text-lg">A live institute portal for admissions, students, parents, faculty, attendance, marks, books, notices, grade cards, ID cards, and Islamic learning resources.</p>
+            <form action="/search" className="mt-6 flex max-w-xl flex-col gap-2 rounded-3xl border bg-white p-2 shadow-soft min-[390px]:flex-row min-[390px]:rounded-full">
               <input name="q" placeholder="Search books, resources, notices, gallery..." className="min-w-0 flex-1 rounded-full px-4 py-2 outline-none" />
-              <button className="rounded-full bg-palm px-5 py-2 font-semibold text-white">Search</button>
+              <button className="touch-target rounded-full bg-palm px-5 py-2 font-semibold text-white">Search</button>
             </form>
             <div className="mt-7 flex flex-wrap gap-3">
-              <Link className="rounded-full bg-palm px-5 py-3 font-semibold text-white shadow-soft" href="/login/student">Student Login</Link>
-              <Link className="rounded-full border border-palm bg-white px-5 py-3 font-semibold text-palm" href="/login/parent">Parent Login</Link>
-              <Link className="rounded-full bg-emeraldInk px-5 py-3 font-semibold text-white" href="/login/faculty">Faculty Login</Link>
-              <Link className="rounded-full bg-gold px-5 py-3 font-semibold text-emeraldInk" href="/login/admin">Admin Login</Link>
-              <a className="inline-flex items-center gap-2 rounded-full border border-skySeal bg-white px-5 py-3 font-semibold text-skySeal shadow-soft" href="/downloads/DarsgahKongamdara.apk" download>
+              <Link className="touch-target inline-flex flex-1 items-center justify-center rounded-full bg-palm px-5 py-3 font-semibold text-white shadow-soft min-[390px]:flex-none" href="/login/student">Student Login</Link>
+              <Link className="touch-target inline-flex flex-1 items-center justify-center rounded-full border border-palm bg-white px-5 py-3 font-semibold text-palm min-[390px]:flex-none" href="/login/parent">Parent Login</Link>
+              <Link className="touch-target inline-flex flex-1 items-center justify-center rounded-full bg-emeraldInk px-5 py-3 font-semibold text-white min-[390px]:flex-none" href="/login/faculty">Faculty Login</Link>
+              <Link className="touch-target inline-flex flex-1 items-center justify-center rounded-full bg-gold px-5 py-3 font-semibold text-emeraldInk min-[390px]:flex-none" href="/login/admin">Admin Login</Link>
+              <a className="touch-target inline-flex w-full items-center justify-center gap-2 rounded-full border border-skySeal bg-white px-5 py-3 font-semibold text-skySeal shadow-soft sm:w-auto" href="/downloads/DarsgahKongamdara.apk" download>
                 <Download size={18} /> Download Android App
               </a>
             </div>
@@ -84,35 +95,13 @@ export default async function HomePage() {
 
       <Section id="books" title="Islamic Digital Library" icon={<BookOpen />}>
         <div className="grid gap-4 md:grid-cols-3">
-          {home.books?.map((book: any) => (
-            <Card key={book._id} className="overflow-hidden p-0">
-              <Image src={assetUrl(book.coverUrl || book.thumbnailUrl)} alt={book.title} width={520} height={300} loading="lazy" className="h-44 w-full object-cover" />
-              <div className="p-4">
-                <strong className="text-lg">{book.title}</strong>
-                <p className="mt-1 text-sm text-emerald-700">{book.category} | {book.author} | {book.language}</p>
-                <p className="mt-1 text-xs text-emerald-800">Pages: {book.pages || "-"} | Edition: {book.edition || "2026"} | Downloads: {book.downloads || 0}</p>
-                <p className="mt-2 line-clamp-3 text-sm">{book.description}</p>
-                <CardActions readHref={`/reader/book/${book._id}`} downloadHref={`${API_URL}/books/${book._id}/download`} detailsHref="/books" />
-              </div>
-            </Card>
-          ))}
+          {home.books?.length ? home.books.map((book: any) => <DocumentCard key={book._id} item={book} kind="book" detailsHref={`/books#book-${book._id}`} />) : <Card>No books are available yet.</Card>}
         </div>
       </Section>
 
       <Section id="resources" title="Resources" icon={<BookOpen />}>
         <div className="grid gap-4 md:grid-cols-3">
-          {home.resources?.map((resource: any) => (
-            <Card key={resource._id} className="overflow-hidden p-0">
-              <Image src={assetUrl(resource.thumbnailUrl)} alt={resource.title} width={520} height={300} loading="lazy" className="h-44 w-full object-cover" />
-              <div className="p-4">
-                <strong className="text-lg">{resource.title}</strong>
-                <p className="mt-1 text-sm text-emerald-700">{resource.category} | {resource.fileType?.toUpperCase?.()} | {resource.fileSize || "Public resource"}</p>
-                <p className="mt-1 text-xs text-emerald-800">Uploaded by {resource.uploadedBy || "Institute"} | Downloads: {resource.downloads || 0}</p>
-                <p className="mt-2 line-clamp-3 text-sm">{resource.description}</p>
-                <CardActions readHref={`/reader/resource/${resource._id}`} downloadHref={`${API_URL}/resources/${resource._id}/download`} detailsHref="/resources" />
-              </div>
-            </Card>
-          ))}
+          {home.resources?.length ? home.resources.map((resource: any) => <DocumentCard key={resource._id} item={resource} kind="resource" detailsHref={`/resources#resource-${resource._id}`} />) : <Card>No resources are available yet.</Card>}
         </div>
       </Section>
 
@@ -139,11 +128,53 @@ export default async function HomePage() {
         </Card>
       </Section>
 
+      <Section id="location-map" title="Location Map" icon={<MapPin />}>
+        <Card className="overflow-hidden p-0">
+          <iframe
+            className="h-[360px] w-full border-0 sm:h-[440px]"
+            src={institute.mapEmbedUrl}
+            title="Darsgah Taleemul Quran Wal Hadith location map"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            allowFullScreen
+          />
+          <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="font-semibold text-emeraldInk">{institute.location}</p>
+            <a
+              className="touch-target inline-flex items-center justify-center gap-2 rounded-full bg-palm px-5 py-3 font-semibold text-white"
+              href={institute.mapUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <MapPin size={18} /> Open in Google Maps
+            </a>
+          </div>
+        </Card>
+      </Section>
+
       <section className="bg-emeraldInk py-12 text-white">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 md:grid-cols-3">
-          <div><Phone /><h2 className="mt-3 text-2xl font-bold">Contact</h2><p>+91 70000 00000</p></div>
-          <div><MapPin /><h2 className="mt-3 text-2xl font-bold">Location</h2><p>Kongamdara Pattan, Jammu & Kashmir</p></div>
-          <div><Image src="/institute-logo.png" alt="Institute logo" width={68} height={68} className="rounded-full border-2 border-gold bg-white" /><h2 className="mt-3 text-2xl font-bold">Official Portal</h2></div>
+          <div>
+            <Phone />
+            <h2 className="mt-3 text-2xl font-bold">Contact</h2>
+            <a className="mt-1 inline-flex min-h-12 items-center font-semibold underline-offset-4 hover:underline" href={`tel:${institute.phone}`}>
+              {formatPhone(institute.phone)}
+            </a>
+          </div>
+          <div>
+            <MapPin />
+            <h2 className="mt-3 text-2xl font-bold">Location</h2>
+            <a
+              className="mt-1 inline-flex min-h-12 items-center font-semibold underline-offset-4 hover:underline"
+              href={institute.mapUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={`Open ${institute.location} in Google Maps`}
+            >
+              {institute.location}
+            </a>
+          </div>
+          <div><LogoBadge size={68} /><h2 className="mt-3 text-2xl font-bold">Official Portal</h2></div>
         </div>
       </section>
       <IslamicAssistantChat />
@@ -151,14 +182,9 @@ export default async function HomePage() {
   );
 }
 
-function CardActions({ readHref, downloadHref, detailsHref }: { readHref: string; downloadHref: string; detailsHref: string }) {
-  return (
-    <div className="mt-4 flex flex-wrap gap-2">
-      <Link className="rounded-full bg-palm px-3 py-2 text-sm font-semibold text-white" href={readHref}>Read Online</Link>
-      <a className="rounded-full border border-palm px-3 py-2 text-sm font-semibold text-palm" href={downloadHref}>Download</a>
-      <Link className="rounded-full border px-3 py-2 text-sm font-semibold text-emeraldInk" href={detailsHref}>View Details</Link>
-    </div>
-  );
+function formatPhone(value: string) {
+  const normalized = value.replace(/\s+/g, "");
+  return normalized.startsWith("+91") ? `+91 ${normalized.slice(3, 8)} ${normalized.slice(8)}` : value;
 }
 
 function Section({ id, title, icon, children }: { id?: string; title: string; icon?: React.ReactNode; children: React.ReactNode }) {

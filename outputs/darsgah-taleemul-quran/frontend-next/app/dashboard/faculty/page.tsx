@@ -11,8 +11,6 @@ import { Button } from "@/components/ui/button";
 import { DashboardShell } from "@/components/erp/DashboardShell";
 
 const classOptions = Array.from({ length: 8 }, (_, index) => `Class ${index + 1}`);
-const today = new Date().toISOString().slice(0, 10);
-
 export default function FacultyDashboard() {
   const [data, setData] = useState<any>(null);
   const [saving, setSaving] = useState(false);
@@ -20,12 +18,13 @@ export default function FacultyDashboard() {
   const [message, setMessage] = useState("");
   const [selectedClassId, setSelectedClassId] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
-  const [attendanceDate, setAttendanceDate] = useState(today);
+  const [attendanceDate, setAttendanceDate] = useState("");
   const [attendance, setAttendance] = useState<Record<string, string>>({});
   const [marksForm, setMarksForm] = useState({ student: "", term: "Term 1", obtainedMarks: "", maxMarks: "100", remarks: "" });
   const [attendanceSaved, setAttendanceSaved] = useState(false);
 
   useEffect(() => {
+    setAttendanceDate(new Date().toISOString().slice(0, 10));
     load();
   }, []);
 

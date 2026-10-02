@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="960" viewBox="0 0 720 960" role="img" aria-labelledby="title description">
+  <title id="title">Islamic learning document cover</title>
+  <desc id="description">A green and white book cover used when a document has no uploaded cover.</desc>
+  <rect width="720" height="960" fill="#f5faf7"/>
+  <path d="M0 0h720v160H0zM0 800h720v160H0z" fill="#0d5c3d"/>
+  <path d="M0 145h720v20H0zM0 795h720v20H0z" fill="#d6aa2f"/>
+  <g fill="none" stroke="#16845b" stroke-width="4" opacity=".18">
+    <path d="M70 250l70-70 70 70-70 70zM255 250l70-70 70 70-70 70zM440 250l70-70 70 70-70 70z"/>
+    <path d="M70 635l70-70 70 70-70 70zM255 635l70-70 70 70-70 70zM440 635l70-70 70 70-70 70z"/>
+  </g>
+  <g transform="translate(210 350)">
+    <path d="M0 40c70-35 122-20 150 5v230c-40-30-95-38-150-4z" fill="#fff" stroke="#0d5c3d" stroke-width="10"/>
+    <path d="M300 40c-70-35-122-20-150 5v230c40-30 95-38 150-4z" fill="#fff" stroke="#0d5c3d" stroke-width="10"/>
+    <path d="M150 45v230" stroke="#d6aa2f" stroke-width="8"/>
+  </g>
+  <text x="360" y="105" fill="#fff" font-family="Arial, sans-serif" font-size="34" font-weight="700" text-anchor="middle">DARSGAH DIGITAL LIBRARY</text>
+  <text x="360" y="875" fill="#fff" font-family="Arial, sans-serif" font-size="28" font-weight="700" text-anchor="middle">KONGAMDARA PATTAN</text>
+</svg>

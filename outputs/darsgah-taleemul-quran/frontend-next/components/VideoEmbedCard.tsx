@@ -41,7 +41,7 @@ function safeThumbnailUrl(video: any) {
     const src = safeImageValue(value);
     if (src) return src;
   }
-  return "/institute-logo.png";
+  return "/institute-logo-official.png";
 }
 
 function safeImageValue(value?: string | null) {

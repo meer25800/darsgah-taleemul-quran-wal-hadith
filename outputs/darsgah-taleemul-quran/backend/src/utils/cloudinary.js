@@ -1,4 +1,5 @@
 import { v2 as cloudinary } from "cloudinary";
+import fs from "fs/promises";
 
 export function configureCloudinary() {
   if (!process.env.CLOUDINARY_CLOUD_NAME) return false;
@@ -12,6 +13,11 @@ export function configureCloudinary() {
 
 export async function uploadToCloudinary(file, folder = "darsgah") {
   if (!configureCloudinary()) {
+    if (process.env.NODE_ENV === "production") {
+      const error = new Error("Persistent file storage is not configured");
+      error.statusCode = 503;
+      throw error;
+    }
     const baseUrl = (process.env.PUBLIC_API_URL || `http://localhost:${process.env.PORT || 5000}`).replace(/\/+$/, "");
     return {
       url: `${baseUrl}/uploads/${file.filename}`,
@@ -25,6 +31,7 @@ export async function uploadToCloudinary(file, folder = "darsgah") {
     folder,
     resource_type: "auto"
   });
+  await fs.unlink(file.path).catch(() => {});
   return {
     url: result.secure_url,
     publicId: result.public_id,

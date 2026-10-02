@@ -5,6 +5,78 @@
 body {
   background: #fbfaf3;
   color: #10231b;
+  overflow-x: clip;
+}
+
+html {
+  scroll-behavior: smooth;
+  text-size-adjust: 100%;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+img, video, iframe, canvas, svg {
+  max-width: 100%;
+}
+
+.logo-badge {
+  aspect-ratio: 1 / 1;
+}
+
+.react-pdf__Page {
+  max-width: 100%;
+  box-shadow: 0 12px 32px rgba(16, 35, 27, .16);
+}
+
+.react-pdf__Page canvas {
+  height: auto !important;
+  max-width: 100%;
+}
+
+.pdf-viewer:fullscreen {
+  overflow: auto;
+  background: #e5e7eb;
+}
+
+@media print {
+  .no-print,
+  .assistant-launcher,
+  .floating-action-button,
+  nav,
+  header.web-header {
+    display: none !important;
+  }
+
+  body > * {
+    visibility: hidden;
+  }
+
+  .pdf-viewer,
+  .pdf-viewer * {
+    visibility: visible;
+  }
+
+  .pdf-viewer {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+  }
+
+  .pdf-viewer > :first-child {
+    display: none;
+  }
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+:focus-visible {
+  outline: 3px solid rgba(212, 175, 55, .65);
+  outline-offset: 3px;
 }
 
 .islamic-pattern {
@@ -17,4 +89,15 @@ body {
 
 .rtl {
   direction: rtl;
+}
+
+.responsive-table {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.touch-target {
+  min-height: 48px;
+  min-width: 48px;
 }

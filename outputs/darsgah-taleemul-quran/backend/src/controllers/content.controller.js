@@ -3,6 +3,7 @@ import Parent from "../models/Parent.js";
 import { Faculty, Event, Syllabus } from "../models/ErpModels.js";
 import { Admission, Book, Gallery, Notice, Resource, Video } from "../models/Content.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
+import { formatFileSize, inspectUploadedDocument, pdfThumbnailUrl } from "../utils/documentMetadata.js";
 
 const searchModels = [
   ["books", Book, ["title", "author", "category", "description"]],
@@ -48,7 +49,9 @@ export async function trackBookView(req, res) {
 export async function trackBookDownload(req, res) {
   const item = await Book.findByIdAndUpdate(req.params.id, { $inc: { downloads: 1 } }, { new: true });
   if (!item) return res.status(404).json({ message: "Book not found" });
-  res.redirect(item.fileUrl || item.previewUrl || "/institute-logo.png");
+  const fileUrl = item.fileUrl || item.previewUrl;
+  if (!fileUrl) return res.status(404).json({ message: "This document is currently unavailable. Please contact the institute administration." });
+  res.redirect(fileUrl);
 }
 
 export async function trackResourceView(req, res) {
@@ -60,7 +63,9 @@ export async function trackResourceView(req, res) {
 export async function trackResourceDownload(req, res) {
   const item = await Resource.findByIdAndUpdate(req.params.id, { $inc: { downloads: 1 } }, { new: true });
   if (!item) return res.status(404).json({ message: "Resource not found" });
-  res.redirect(item.fileUrl || item.previewUrl || "/institute-logo.png");
+  const fileUrl = item.fileUrl || item.previewUrl;
+  if (!fileUrl) return res.status(404).json({ message: "This document is currently unavailable. Please contact the institute administration." });
+  res.redirect(fileUrl);
 }
 
 export async function viewSyllabus(req, res) {
@@ -70,7 +75,9 @@ export async function viewSyllabus(req, res) {
 }
 
 export async function uploadResource(req, res) {
+  const metadata = await inspectUploadedDocument(req.file);
   const file = req.file ? await uploadToCloudinary(req.file, "darsgah/resources") : null;
+  const fileUrl = file?.url || req.body.fileUrl || "";
   const item = await Resource.create({
     title: req.body.title,
     category: req.body.category || "Other",
@@ -82,10 +89,12 @@ export async function uploadResource(req, res) {
     isFeatured: req.body.isFeatured === "true" || req.body.isFeatured === true,
     displayOrder: Number(req.body.displayOrder || 0),
     fileType: req.body.fileType || (file?.mimeType?.split("/")[1] || "pdf"),
-    fileUrl: file?.url || req.body.fileUrl,
-    previewUrl: file?.url || req.body.previewUrl,
-    thumbnailUrl: req.body.thumbnailUrl || "/institute-logo.png",
-    fileSize: file?.size ? `${Math.ceil(file.size / 1024)} KB` : req.body.fileSize,
+    fileUrl,
+    previewUrl: fileUrl || req.body.previewUrl,
+    thumbnailUrl: req.body.thumbnailUrl || pdfThumbnailUrl(fileUrl),
+    fileSize: formatFileSize(metadata.fileSizeBytes) || req.body.fileSize,
+    ...metadata,
+    fileAvailable: Boolean(fileUrl),
     uploadedBy: req.user?.name || "Admin",
     uploadDate: new Date(),
     isPublic: req.body.isPublic !== "false",
@@ -95,9 +104,13 @@ export async function uploadResource(req, res) {
 }
 
 export async function uploadBook(req, res) {
-  const pdfFile = req.files?.pdf?.[0] ? await uploadToCloudinary(req.files.pdf[0], "darsgah/books") : null;
+  const pdfUpload = req.files?.pdf?.[0];
+  const metadata = await inspectUploadedDocument(pdfUpload);
+  const pdfFile = pdfUpload ? await uploadToCloudinary(pdfUpload, "darsgah/books") : null;
   const coverFile = req.files?.cover?.[0] ? await uploadToCloudinary(req.files.cover[0], "darsgah/book-covers") : null;
   if (!pdfFile && !req.body.externalUrl) return res.status(422).json({ message: "Upload a PDF or provide an external website link" });
+  const fileUrl = pdfFile?.url || req.body.fileUrl || "";
+  const generatedCover = pdfThumbnailUrl(fileUrl);
   const item = await Book.create({
     title: req.body.title,
     author: req.body.author,
@@ -111,11 +124,14 @@ export async function uploadBook(req, res) {
     externalUrl: req.body.externalUrl,
     isFeatured: req.body.isFeatured === "true" || req.body.isFeatured === true,
     displayOrder: Number(req.body.displayOrder || 0),
-    fileUrl: pdfFile?.url || req.body.fileUrl,
-    previewUrl: pdfFile?.url || req.body.previewUrl,
-    fileSize: pdfFile?.size ? `${Math.ceil(pdfFile.size / 1024)} KB` : req.body.fileSize,
-    coverUrl: coverFile?.url || req.body.coverUrl || "/institute-logo.png",
-    thumbnailUrl: coverFile?.url || req.body.thumbnailUrl || "/institute-logo.png",
+    fileUrl,
+    previewUrl: fileUrl || req.body.previewUrl,
+    fileSize: formatFileSize(metadata.fileSizeBytes) || req.body.fileSize,
+    coverUrl: coverFile?.url || req.body.coverUrl || generatedCover,
+    thumbnailUrl: coverFile?.url || req.body.thumbnailUrl || generatedCover,
+    pages: metadata.pageCount,
+    ...metadata,
+    fileAvailable: Boolean(fileUrl || req.body.externalUrl),
     isPublic: req.body.isPublic !== "false",
     published: req.body.published !== "false"
   });

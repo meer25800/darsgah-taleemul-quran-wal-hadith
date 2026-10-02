@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Bot, Loader2, RefreshCcw, Send, Square, Trash2, X } from "lucide-react";
+import { Bot, Check, Copy, Loader2, RefreshCcw, Send, Square, Trash2, X } from "lucide-react";
 import { ISLAMIC_REFUSAL, isLikelyRtl } from "@/lib/islamic-assistant-client";
+import { LogoBadge } from "@/components/LogoBadge";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 type Settings = {
@@ -46,6 +46,7 @@ export function IslamicAssistantChat() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -101,7 +102,13 @@ export function IslamicAssistantChat() {
       if (!data.success) throw new Error(data.error || "The assistant is temporarily unavailable. Please try again.");
       setMessages([...nextMessages, { role: "assistant", content: String(data.answer || ISLAMIC_REFUSAL) }]);
     } catch (err: any) {
-      if (err?.name !== "AbortError") setError(err?.message || "The assistant is temporarily unavailable. Please try again.");
+      if (err?.name !== "AbortError") {
+        const message =
+          err?.message ||
+          "The assistant is temporarily unavailable. Please try again with an Islamic or institute-related question.";
+        setError(message);
+        setMessages([...nextMessages, { role: "assistant", content: message }]);
+      }
     } finally {
       setLoading(false);
       abortRef.current = null;
@@ -124,17 +131,27 @@ export function IslamicAssistantChat() {
     }
   }
 
+  async function copyMessage(content: string, index: number) {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedIndex(index);
+      window.setTimeout(() => setCopiedIndex(null), 1400);
+    } catch {
+      setCopiedIndex(null);
+    }
+  }
+
   return (
-    <div className="fixed bottom-4 right-4 z-50 print:hidden">
+    <div className="assistant-launcher fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-3 z-50 print:hidden sm:right-4">
       {!open && (
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex items-center gap-3 rounded-full border border-gold/50 bg-emeraldInk px-4 py-3 text-sm font-bold text-white shadow-2xl transition hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-gold/40"
+          className="flex min-h-12 items-center gap-3 rounded-full border border-gold/50 bg-emeraldInk px-2 py-2 text-sm font-bold text-white shadow-2xl transition hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-gold/40 sm:px-4"
           aria-label="Open Darsgah Islamic Assistant"
         >
-          <Image src="/institute-logo.png" alt="" width={34} height={34} className="rounded-full bg-white" />
-          Islamic Assistant
+          <LogoBadge size={40} alt="" className="h-10 w-10" />
+          <span className="hidden sm:inline">Islamic Assistant</span>
         </button>
       )}
 
@@ -142,7 +159,7 @@ export function IslamicAssistantChat() {
         <section className="fixed inset-x-2 bottom-2 top-16 flex flex-col overflow-hidden rounded-2xl border border-emerald-900/10 bg-white shadow-2xl sm:inset-auto sm:bottom-4 sm:right-4 sm:h-[680px] sm:max-h-[calc(100vh-2rem)] sm:w-[430px]" aria-label="Darsgah Islamic Assistant chat">
           <header className="flex items-center justify-between gap-3 bg-emeraldInk p-4 text-white">
             <div className="flex min-w-0 items-center gap-3">
-              <Image src="/institute-logo.png" alt="Darsgah logo" width={42} height={42} className="rounded-full border border-gold bg-white" />
+              <LogoBadge size={44} className="h-11 w-11" />
               <div className="min-w-0">
                 <h2 className="truncate text-base font-black">{settings.publicName}</h2>
                 <p className="text-xs text-emerald-50">Islamic educational help</p>
@@ -163,12 +180,23 @@ export function IslamicAssistantChat() {
                   const rtl = isLikelyRtl(message.content);
                   const assistant = message.role === "assistant";
                   return (
-                    <div key={`${message.role}-${index}`} className={`flex ${assistant ? "justify-start" : "justify-end"}`}>
+                    <div key={`${message.role}-${index}`} className={`group flex ${assistant ? "justify-start" : "justify-end"}`}>
                       <div
                         dir={rtl ? "rtl" : "ltr"}
-                        className={`max-w-[86%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed ${assistant ? "bg-white text-emeraldInk shadow-soft" : "bg-palm text-white"}`}
+                        className={`relative max-w-[86%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed ${assistant ? "bg-white text-emeraldInk shadow-soft" : "bg-palm text-white"}`}
                       >
                         {assistant && index === 0 && <Bot size={16} className="mb-1 inline-block text-gold" />} {message.content}
+                        {assistant && index > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => copyMessage(message.content, index)}
+                            className="mt-2 inline-flex items-center gap-1 rounded-full border border-emerald-100 px-2 py-1 text-[11px] font-bold text-emerald-800 opacity-80 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-gold/40 sm:opacity-0 sm:group-hover:opacity-100"
+                            aria-label="Copy assistant response"
+                          >
+                            {copiedIndex === index ? <Check size={12} /> : <Copy size={12} />}
+                            {copiedIndex === index ? "Copied" : "Copy"}
+                          </button>
+                        )}
                       </div>
                     </div>
                   );

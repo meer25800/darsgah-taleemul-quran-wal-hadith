@@ -31,5 +31,5 @@ export async function downloadGradeCard(req, res) {
 export async function downloadIdCard(req, res) {
   const student = await Student.findById(req.user.studentId);
   if (!student) return res.status(404).json({ message: "Student not found" });
-  await idCardPdf(student, res);
+  await idCardPdf(student, res, { layout: req.query.layout });
 }

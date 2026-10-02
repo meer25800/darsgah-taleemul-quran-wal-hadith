@@ -6,6 +6,7 @@ import {
   ISLAMIC_ASSISTANT_SYSTEM_PROMPT,
   ISLAMIC_REFUSAL,
   classifyIslamicScope,
+  localIslamicFallback,
   sanitizeAssistantAnswer
 } from "@/lib/islamic-assistant";
 
@@ -106,6 +107,7 @@ async function getDarsgahPublicContext() {
 }
 
 export async function POST(req: NextRequest) {
+  let fallbackPayload: z.infer<typeof chatSchema> | null = null;
   try {
     const contentLength = Number(req.headers.get("content-length") || 0);
     if (contentLength > 16_000) {
@@ -123,6 +125,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { message, history } = parsed.data;
+    fallbackPayload = parsed.data;
     const scope = classifyIslamicScope(message);
     if (scope.classification === "unrelated") {
       return json({ success: true, answer: ISLAMIC_REFUSAL, classification: scope.classification });
@@ -130,7 +133,7 @@ export async function POST(req: NextRequest) {
     if (scope.classification === "unsafe") {
       return json({
         success: true,
-        answer: "I cannot help with harmful or unsafe requests. Please ask a peaceful Islamic educational question.",
+        answer: ISLAMIC_REFUSAL,
         classification: scope.classification
       });
     }
@@ -138,7 +141,12 @@ export async function POST(req: NextRequest) {
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
       console.error("GROQ_API_KEY is not configured.");
-      return json({ success: false, error: "The assistant is temporarily unavailable. Please try again." }, 503);
+      return json({
+        success: true,
+        answer: localIslamicFallback(message, scope.classification),
+        classification: scope.classification,
+        degraded: true
+      });
     }
 
     const groq = new Groq({ apiKey });
@@ -159,10 +167,19 @@ export async function POST(req: NextRequest) {
       18_000
     );
 
-    const answer = sanitizeAssistantAnswer(completion.choices?.[0]?.message?.content, scope.classification);
+    const answer = sanitizeAssistantAnswer(completion.choices?.[0]?.message?.content, scope.classification, message);
     return json({ success: true, answer, classification: scope.classification });
   } catch (error) {
     console.error("Islamic assistant error:", error instanceof Error ? error.message : error);
-    return json({ success: false, error: "The assistant is temporarily unavailable. Please try again." }, 500);
+    if (fallbackPayload) {
+      const scope = classifyIslamicScope(fallbackPayload.message);
+      return json({
+        success: true,
+        answer: localIslamicFallback(fallbackPayload.message, scope.classification),
+        classification: scope.classification,
+        degraded: true
+      });
+    }
+    return json({ success: true, answer: ISLAMIC_REFUSAL, degraded: true });
   }
 }

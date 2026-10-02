@@ -20,7 +20,7 @@ const emptyForms: Record<string, any> = {
   timetable: { classId: "", subject: "", faculty: "", day: "Monday", startTime: "", endTime: "", room: "" },
   syllabus: { uploadType: "complete-class", classId: "", section: "A", subject: "", title: "", academicYear: "2026-2027", description: "", textContent: "", isPublished: true, isPublic: true },
   fees: { classId: "", student: "", month: "", amount: 0, paidAmount: 0, paymentDate: "", paymentMethod: "Cash", status: "pending", receiptNumber: "", remarks: "" },
-  attendance: { classId: "", subject: "", faculty: "", date: new Date().toISOString().slice(0, 10) },
+  attendance: { classId: "", subject: "", faculty: "", date: "" },
   results: { classId: "", student: "", term: "Term 1", academicYear: "2026-2027", remarks: "", isPublished: true },
   admissions: { studentName: "", fatherName: "", dob: "", gender: "Male", address: "", phone: "", previousClass: "", classApplyingFor: "Class 1", admissionDate: "", academicYear: "2026-2027", status: "pending" },
   announcements: { title: "", message: "", audience: "everyone", classId: "", priority: "normal", publishDate: "", expiryDate: "", isPublished: true },
@@ -31,7 +31,7 @@ const emptyForms: Record<string, any> = {
   books: { title: "", author: "", category: "Quran", description: "", classId: "", subjectId: "", externalUrl: "", language: "Urdu", isFeatured: false, published: true, isPublic: true, displayOrder: 0 },
   resources: { title: "", category: "Other", description: "", classId: "", subjectId: "", externalUrl: "", fileType: "pdf", isFeatured: false, published: true, isPublic: true, displayOrder: 0 },
   gallery: { title: "", description: "", caption: "", album: "Events", category: "Events", eventDate: "", displayOrder: 0, isFeatured: true, published: true },
-  videos: { title: "", description: "", videoType: "YouTube", youtubeUrl: "", category: "Quran", displayOrder: 0, isFeatured: true, published: true, showOnHome: true },
+  videos: { title: "", description: "", videoType: "YouTube", youtubeUrl: "", category: "Quran", displayOrder: 0, classId: "", subjectId: "", isFeatured: true, published: true, showOnHome: true },
   islamicAssistant: {
     enabled: true,
     publicName: "Darsgah Islamic Assistant",
@@ -72,10 +72,6 @@ export default function AdminDashboard() {
   const [credentialSlip, setCredentialSlip] = useState<any>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && !localStorage.getItem("darsgah_token")) {
-      router.replace("/login/admin");
-      return;
-    }
     refreshAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -209,8 +205,12 @@ export default function AdminDashboard() {
       else if (resource === "resources") await saveResource();
       else if (resource === "gallery") await saveGallery();
       else if (resource === "videos") {
-        if (editId) await api.put(`/videos/${editId}`, form);
-        else await api.post("/videos", form);
+        if (!String(form.title || "").trim()) throw new Error("Video title is required.");
+        if (!extractYouTubeVideoId(form.youtubeUrl)) throw new Error("Enter a valid YouTube URL.");
+        if (!Number.isInteger(Number(form.displayOrder)) || Number(form.displayOrder) < 0) throw new Error("Display order must be a non-negative whole number.");
+        const body = { ...form, displayOrder: Number(form.displayOrder) };
+        if (editId) await api.put(`/videos/${editId}`, body);
+        else await api.post("/videos", body);
       }
       else if (resource === "islamicAssistant") {
         const payload = {
@@ -362,7 +362,7 @@ export default function AdminDashboard() {
             <form onSubmit={save} className="mt-5 grid gap-3">
               <ModuleForm resource={resource} form={form} setForm={setForm} lookup={lookup} classStudents={classStudents} classSubjects={classSubjects} files={files} setFiles={setFiles} attendance={attendance} setAttendance={setAttendance} resultMarks={resultMarks} setResultMarks={setResultMarks} />
               <div className="flex flex-wrap gap-2">
-                <Button disabled={saving}>{editId ? <Edit3 size={16} /> : <CheckCircle size={16} />} {editId ? "Update" : "Save"} {label(resource)}</Button>
+                <Button disabled={saving}>{editId ? <Edit3 size={16} /> : <CheckCircle size={16} />} {saving ? "Saving..." : submitLabel(resource, Boolean(editId))}</Button>
                 {editId && <Button type="button" variant="outline" onClick={() => { setEditId(""); setForm(cloneDefault(resource)); }}>Cancel Edit</Button>}
               </div>
             </form>
@@ -392,7 +392,7 @@ function ModuleForm(props: any) {
   if (resource === "books") return <div className="grid gap-3 md:grid-cols-3"><Input placeholder="Book Title *" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /><Input placeholder="Author" value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })} /><Input placeholder="Category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /><ClassSelect form={form} setForm={setForm} classes={lookup.classes} /><Select value={form.subjectId} onChange={(subjectId) => setForm({ ...form, subjectId })} options={lookup.subjects.map((s: any) => [s._id, s.name])} placeholder="Subject" /><Input placeholder="Language" value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value })} /><Input placeholder="External Website Link" value={form.externalUrl} onChange={(e) => setForm({ ...form, externalUrl: e.target.value })} /><Input type="file" accept=".pdf" onChange={(e) => setFiles([...(e.target.files ? Array.from(e.target.files) : []), files[1]].filter(Boolean) as File[])} /><Input type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(e) => setFiles([files[0], ...(e.target.files ? Array.from(e.target.files) : [])].filter(Boolean) as File[])} /><textarea className="rounded-xl border px-4 py-3 md:col-span-3" placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /><Flags form={form} setForm={setForm} /></div>;
   if (resource === "resources") return <div className="grid gap-3 md:grid-cols-3"><Input placeholder="Resource Title *" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /><Select value={form.category} onChange={(category) => setForm({ ...form, category })} options={["Subject Note", "Worksheet", "Dua", "Hadees", "Circular", "Admission Resource", "General Resource", "Other"]} /><Input placeholder="File Type" value={form.fileType} onChange={(e) => setForm({ ...form, fileType: e.target.value })} /><ClassSelect form={form} setForm={setForm} classes={lookup.classes} /><Select value={form.subjectId} onChange={(subjectId) => setForm({ ...form, subjectId })} options={lookup.subjects.map((s: any) => [s._id, s.name])} placeholder="Subject" /><Input placeholder="External Website Link" value={form.externalUrl} onChange={(e) => setForm({ ...form, externalUrl: e.target.value })} /><Input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png" onChange={(e) => setFiles(Array.from(e.target.files || []))} /><textarea className="rounded-xl border px-4 py-3 md:col-span-3" placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /><Flags form={form} setForm={setForm} /></div>;
   if (resource === "gallery") return <div className="grid gap-3 md:grid-cols-3"><Input placeholder="Gallery Title *" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /><Input placeholder="Album / Category" value={form.album} onChange={(e) => setForm({ ...form, album: e.target.value, category: e.target.value })} /><Input type="date" value={form.eventDate} onChange={(e) => setForm({ ...form, eventDate: e.target.value })} /><Input type="number" placeholder="Display Order" value={form.displayOrder} onChange={(e) => setForm({ ...form, displayOrder: Number(e.target.value) })} /><Input type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(e) => setFiles(Array.from(e.target.files || []))} /><Input placeholder="Image Caption" value={form.caption} onChange={(e) => setForm({ ...form, caption: e.target.value })} /><textarea className="rounded-xl border px-4 py-3 md:col-span-3" placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /><Flags form={form} setForm={setForm} /></div>;
-  if (resource === "videos") return <div className="grid gap-3 md:grid-cols-3"><Field label="Video Title"><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></Field><Field label="YouTube URL"><Input value={form.youtubeUrl} onChange={(e) => setForm({ ...form, youtubeUrl: e.target.value })} /></Field><Field label="Category"><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></Field><Field label="Display Order"><Input type="number" value={form.displayOrder} onChange={(e) => setForm({ ...form, displayOrder: e.target.value })} /></Field><Field label="Target Class"><ClassSelect form={form} setForm={setForm} classes={lookup.classes} /></Field><Field label="Target Subject"><Select value={form.subjectId} onChange={(subjectId) => setForm({ ...form, subjectId })} options={lookup.subjects.map((s: any) => [s._id, s.name])} placeholder="Optional subject" /></Field><Field label="Description"><textarea className="min-h-28 rounded-xl border px-4 py-3 md:col-span-3" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></Field><Flags form={form} setForm={setForm} /><VideoPreview url={form.youtubeUrl} title={form.title} description={form.description} /></div>;
+  if (resource === "videos") return <div className="grid gap-3 md:grid-cols-3"><Field label="Video Title *"><Input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></Field><Field label="YouTube URL *"><Input required inputMode="url" value={form.youtubeUrl} onChange={(e) => setForm({ ...form, youtubeUrl: e.target.value })} /></Field><Field label="Category *"><Select value={form.category} onChange={(category) => setForm({ ...form, category })} options={["Quran", "Tajweed", "Hadees", "Seerah", "Duas", "Institute Events", "Student Activities"]} /></Field><Field label="Display Order"><Input type="number" min="0" step="1" value={form.displayOrder} onChange={(e) => setForm({ ...form, displayOrder: e.target.value })} /></Field><Field label="Target Class"><ClassSelect form={form} setForm={setForm} classes={lookup.classes} placeholder="All Classes" /></Field><Field label="Target Subject"><Select disabled={!form.classId} value={form.subjectId} onChange={(subjectId) => setForm({ ...form, subjectId })} options={lookup.subjects.filter((s: any) => !form.classId || String(s.classId || "") === String(form.classId)).map((s: any) => [s._id, s.name])} placeholder={form.classId ? "All Subjects" : "Select a class first"} /></Field><Field label="Description"><textarea className="min-h-28 rounded-xl border px-4 py-3 md:col-span-3" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></Field><Flags form={form} setForm={setForm} /><VideoPreview url={form.youtubeUrl} title={form.title} description={form.description} /></div>;
   if (resource === "islamicAssistant") return <div className="grid gap-3 md:grid-cols-2"><label className="flex items-center gap-2 rounded-xl border px-4 py-3 text-sm"><input type="checkbox" checked={Boolean(form.enabled)} onChange={(e) => setForm({ ...form, enabled: e.target.checked })} /> Assistant enabled</label><label className="flex items-center gap-2 rounded-xl border px-4 py-3 text-sm"><input type="checkbox" checked={Boolean(form.homepageVisible)} onChange={(e) => setForm({ ...form, homepageVisible: e.target.checked })} /> Show on homepage</label><Field label="Assistant Public Name"><Input value={form.publicName} onChange={(e) => setForm({ ...form, publicName: e.target.value })} /></Field><Field label="Display Position"><Select value={form.displayPosition} onChange={(displayPosition) => setForm({ ...form, displayPosition })} options={[["bottom-right", "Bottom Right"], ["bottom-left", "Bottom Left"]]} /></Field><Field label="Maximum Message Length"><Input type="number" value={form.maxMessageLength} onChange={(e) => setForm({ ...form, maxMessageLength: e.target.value })} /></Field><Field label="Daily Request Limit"><Input type="number" value={form.dailyRequestLimit} onChange={(e) => setForm({ ...form, dailyRequestLimit: e.target.value })} /></Field><Field label="Optional Model Name"><Input value={form.modelName} onChange={(e) => setForm({ ...form, modelName: e.target.value })} placeholder="Server GROQ_MODEL still controls the active model" /></Field><Field label="Greeting Message"><textarea className="min-h-28 rounded-xl border px-4 py-3" value={form.greeting} onChange={(e) => setForm({ ...form, greeting: e.target.value })} /></Field><Field label="Suggested Questions, one per line"><textarea className="min-h-40 rounded-xl border px-4 py-3" value={form.suggestedQuestions} onChange={(e) => setForm({ ...form, suggestedQuestions: e.target.value })} /></Field><Field label="Disclaimer"><textarea className="min-h-28 rounded-xl border px-4 py-3" value={form.disclaimer} onChange={(e) => setForm({ ...form, disclaimer: e.target.value })} /></Field><Field label="Maintenance Message"><textarea className="min-h-24 rounded-xl border px-4 py-3 md:col-span-2" value={form.maintenanceMessage} onChange={(e) => setForm({ ...form, maintenanceMessage: e.target.value })} /></Field><p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800 md:col-span-2">Security note: the Groq API key, Islamic-only system prompt, refusal rule, and prompt-protection rules are server-only and cannot be edited from this page.</p></div>;
   if (resource === "loginManagement") return <div className="grid gap-3 md:grid-cols-3"><Field label="Account Type"><Select value={form.role} onChange={(role) => setForm({ ...cloneDefault("loginManagement"), role, username: nextUsername(role, lookup) })} options={[["student", "Student"], ["parent", "Parent"], ["faculty", "Faculty/Teacher"], ["admin", "Administrator"]]} /></Field>{form.role !== "admin" ? <><Field label="Select User"><Select value={form.ownerId} onChange={(ownerId) => setForm({ ...form, ownerId, username: ownerUsername(form.role, ownerId, lookup) || form.username })} options={ownersFor(form.role, lookup).map((o: any) => [o._id, o.label])} placeholder="Select existing person" /></Field><Field label="Username / ID"><Input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} /></Field></> : <><Field label="Full Name"><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field><Field label="Email Address"><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field><Field label="Phone"><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></Field><Field label="Permission Group"><Input value={form.permissionGroup} onChange={(e) => setForm({ ...form, permissionGroup: e.target.value })} /></Field></>}<Field label="Temporary Password"><Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} /></Field><Field label="Confirm Password"><Input type="password" value={form.confirmPassword} onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })} /></Field><label className="flex items-center gap-2 rounded-xl border px-4 py-3 text-sm"><input type="checkbox" checked={Boolean(form.isActive)} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} /> Active</label><label className="flex items-center gap-2 rounded-xl border px-4 py-3 text-sm"><input type="checkbox" checked={Boolean(form.mustChangePassword)} onChange={(e) => setForm({ ...form, mustChangePassword: e.target.checked })} /> Force password change</label></div>;
   return <GenericForm form={form} setForm={setForm} lookup={lookup} />;
@@ -407,9 +407,10 @@ function Field({ label: title, children }: { label: string; children: React.Reac
 }
 
 function VideoPreview({ url, title, description }: any) {
+  if (!String(url || "").trim()) return null;
   const id = extractYouTubeVideoId(url);
-  if (!id) return <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-700 md:col-span-3">Enter a valid YouTube URL to preview the video before saving.</p>;
-  return <div className="md:col-span-3"><div className="aspect-video overflow-hidden rounded-2xl border bg-emerald-950"><iframe className="h-full w-full" src={`https://www.youtube.com/embed/${id}`} title={title || "Video preview"} allowFullScreen /></div><strong className="mt-2 block">{title || "Video preview"}</strong>{description && <p className="text-sm text-emerald-700">{description}</p>}</div>;
+  if (!id) return <p role="alert" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-700 md:col-span-3">This is not a supported YouTube URL.</p>;
+  return <div className="md:col-span-3"><p className="mb-2 text-sm font-semibold text-palm">Video preview</p><div className="aspect-video max-w-2xl overflow-hidden rounded-2xl border bg-emerald-950"><iframe className="h-full w-full" src={`https://www.youtube.com/embed/${id}`} title={title || "Video preview"} loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div><strong className="mt-2 block">{title || "Untitled video"}</strong>{description && <p className="text-sm text-emerald-700">{description}</p>}</div>;
 }
 
 function GenericForm({ form, setForm, lookup }: any) {
@@ -425,15 +426,15 @@ function FilterBar({ resource, filters, setFilters, classes, onSearch }: any) {
   return <div className="flex flex-wrap gap-2"><select className="rounded-full border px-3 py-2 text-sm" value={filters.className || ""} onChange={(e) => setFilters({ ...filters, className: e.target.value })}><option value="">All Classes</option>{classes.map((c: any) => <option key={c._id} value={c.name}>{c.name} - {c.section}</option>)}</select>{resource === "timetable" && <Select value={filters.day || ""} onChange={(day) => setFilters({ ...filters, day })} options={days} placeholder="All Days" />}{resource === "fees" && <Select value={filters.status || ""} onChange={(status) => setFilters({ ...filters, status })} options={["paid", "partial", "pending", "waived"]} placeholder="All Status" />}{resource === "syllabus" && <Select value={filters.uploadType || ""} onChange={(uploadType) => setFilters({ ...filters, uploadType })} options={[["complete-class", "Complete Class"], ["subject-wise", "Subject-wise"]]} placeholder="All Types" />}<Button type="button" onClick={onSearch}><Search size={16} /> Filter</Button></div>;
 }
 
-function ClassSelect({ form, setForm, classes }: any) {
+function ClassSelect({ form, setForm, classes, placeholder = "Select Class" }: any) {
   return <select className="rounded-xl border px-3 py-3" value={form.classId || ""} onChange={(e) => {
     const classDoc = classes.find((item: any) => item._id === e.target.value);
-    setForm({ ...form, classId: e.target.value, className: classDoc?.name || form.className, section: classDoc?.section || form.section });
-  }}><option value="">Select Class</option>{classes.map((c: any) => <option key={c._id} value={c._id}>{c.name} - {c.section}</option>)}</select>;
+    setForm({ ...form, classId: e.target.value, subjectId: "", className: classDoc?.name || "", section: classDoc?.section || "" });
+  }}><option value="">{placeholder}</option>{classes.map((c: any) => <option key={c._id} value={c._id}>{c.name} - {c.section}</option>)}</select>;
 }
 
-function Select({ value, onChange, options, placeholder }: any) {
-  return <select className="rounded-xl border px-3 py-3" value={value || ""} onChange={(e) => onChange(e.target.value)}>{placeholder && <option value="">{placeholder}</option>}{options.map((option: any) => Array.isArray(option) ? <option key={option[0]} value={option[0]}>{option[1]}</option> : <option key={option} value={option}>{option}</option>)}</select>;
+function Select({ value, onChange, options, placeholder, disabled = false }: any) {
+  return <select disabled={disabled} className="rounded-xl border px-3 py-3 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500" value={value || ""} onChange={(e) => onChange(e.target.value)}>{placeholder && <option value="">{placeholder}</option>}{options.map((option: any) => Array.isArray(option) ? <option key={option[0]} value={option[0]}>{option[1]}</option> : <option key={option} value={option}>{option}</option>)}</select>;
 }
 
 function Stat({ label, value }: { label: string; value: any }) { return <Card><p className="text-sm text-palm">{label}</p><strong className="mt-2 block text-3xl">{value}</strong></Card>; }
@@ -446,6 +447,19 @@ function clearAdminSession() {
 function label(value: string) {
   const labels: Record<string, string> = { videos: "Institute Videos", loginManagement: "Login Management", islamicAssistant: "Islamic AI Assistant", super_admin: "Super Admin" };
   return labels[value] || value.replace(/([A-Z])/g, " $1").replace(/^./, (x) => x.toUpperCase());
+}
+function submitLabel(resource: string, editing: boolean) {
+  const singular: Record<string, string> = {
+    videos: "Video",
+    announcements: "Announcement",
+    admissions: "Admission",
+    classes: "Class",
+    books: "Book",
+    resources: "Resource",
+    gallery: "Gallery Photo",
+    syllabus: "Syllabus"
+  };
+  return `${editing ? "Update" : "Save"} ${singular[resource] || label(resource)}`;
 }
 function recordStatus(item: any) {
   if (typeof item.isActive === "boolean") return item.isActive ? "Active" : "Inactive";

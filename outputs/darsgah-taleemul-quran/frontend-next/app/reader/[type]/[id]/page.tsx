@@ -1,4 +1,6 @@
 import Link from "next/link";
+import sanitizeHtmlLibrary from "sanitize-html";
+import { DocumentPdfViewerClient } from "@/components/DocumentPdfViewerClient";
 import { assetUrl } from "@/lib/assets";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
@@ -20,15 +22,16 @@ export default async function ReaderPage({ params }: { params: Promise<{ type: s
   const files = item?.files?.length ? item.files : item?.file?.url ? [item.file] : [];
   const isImage = Boolean(fileUrl && /\.(png|jpg|jpeg|webp)$/i.test(fileUrl.split("?")[0]));
   const readerUrl = documentUrl(fileUrl, item?.title || "document");
+  const downloadHref = fileUrl ? documentUrl(fileUrl, item?.title || "document", true) : `${API_URL}/${path}/${id}/download`;
+  const available = Boolean(item && (fileUrl || item?.textContent || files.length));
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10">
+    <main className="mx-auto max-w-6xl px-3 py-6 sm:px-4 sm:py-10">
       <Link href="/" className="text-sm font-semibold text-palm">Back to home</Link>
-      <h1 className="mt-4 text-3xl font-black text-emeraldInk">{item?.title || "Reader"}</h1>
+      <h1 className="mt-4 break-words text-2xl font-black text-emeraldInk sm:text-3xl">{item?.title || "Reader"}</h1>
       <p className="mt-2 text-emerald-700">{item?.description}</p>
-      <div className="mt-4 flex gap-2">
-        {type !== "syllabus" && <a className="rounded-full bg-palm px-4 py-2 font-semibold text-white" href={`${API_URL}/${path}/${id}/download`}>Download</a>}
-        {type === "syllabus" && fileUrl && <a className="rounded-full bg-palm px-4 py-2 font-semibold text-white" href={documentUrl(fileUrl, item?.title || "syllabus", true)}>Download File</a>}
-        <Link className="rounded-full border px-4 py-2 font-semibold text-emeraldInk" href={`/${path}`}>View all</Link>
+      <div className="mt-4 flex flex-col gap-2 min-[380px]:flex-row">
+        {fileUrl && <a className="touch-target inline-flex items-center justify-center rounded-full bg-palm px-4 py-2 font-semibold text-white" href={downloadHref}>Download</a>}
+        <Link className="touch-target inline-flex items-center justify-center rounded-full border px-4 py-2 font-semibold text-emeraldInk" href={`/${path}`}>View all</Link>
       </div>
       <section className="mt-6 min-h-[70vh] overflow-hidden rounded-2xl border bg-white shadow-soft">
         {item?.textContent ? (
@@ -39,29 +42,34 @@ export default async function ReaderPage({ params }: { params: Promise<{ type: s
               const url = assetUrl(file.url, "");
               const image = /\.(png|jpg|jpeg|webp)$/i.test(url.split("?")[0]);
               const proxiedUrl = documentUrl(url, file.originalName || item?.title || "document");
-              return image ? <img key={file.url} src={proxiedUrl} alt={file.originalName || item?.title} className="mx-auto max-h-[78vh] w-auto rounded-xl object-contain" /> : <iframe key={file.url} src={proxiedUrl} title={file.originalName || item?.title} className="h-[78vh] w-full rounded-xl" />;
+              return image
+                ? <img key={file.url} src={proxiedUrl} alt={file.originalName || item?.title} className="mx-auto max-h-[78vh] w-auto rounded-xl object-contain" />
+                : <DocumentPdfViewerClient key={file.url} src={proxiedUrl} title={file.originalName || item?.title || "Document"} downloadHref={documentUrl(url, file.originalName || item?.title || "document", true)} />;
             })}
           </div>
         ) : fileUrl && isImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={readerUrl} alt={item?.title || "Syllabus image"} className="mx-auto max-h-[78vh] w-auto object-contain p-4" />
         ) : fileUrl ? (
-          <iframe src={readerUrl} title={item?.title || "Document reader"} className="h-[78vh] w-full" />
-        ) : (
+          <DocumentPdfViewerClient src={readerUrl} title={item?.title || "Document"} downloadHref={downloadHref} />
+        ) : !available ? (
           <div className="grid min-h-[60vh] place-items-center p-8 text-center">
             <div>
-              <p className="text-xl font-bold text-emeraldInk">Online file will appear here after admin uploads it.</p>
-              <p className="mt-2 text-emerald-700">The metadata is already stored in MongoDB and can be edited from the admin dashboard.</p>
+              <p className="text-xl font-bold text-emeraldInk">This document is currently unavailable. Please contact the institute administration.</p>
             </div>
           </div>
-        )}
+        ) : null}
       </section>
     </main>
   );
 }
 
 function sanitizeHtml(value: string) {
-  return value.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "");
+  return sanitizeHtmlLibrary(value, {
+    allowedTags: ["p", "br", "strong", "b", "em", "i", "u", "h2", "h3", "h4", "ul", "ol", "li", "table", "thead", "tbody", "tr", "th", "td", "blockquote"],
+    allowedAttributes: {},
+    disallowedTagsMode: "discard"
+  });
 }
 
 function documentUrl(fileUrl: string, title: string, download = false) {

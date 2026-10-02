@@ -2,7 +2,7 @@ import { Admission, Book, ContactMessage, Gallery, Notice, Resource, Video } fro
 import { Event, Faculty, Setting, Syllabus } from "../models/ErpModels.js";
 
 export async function publicHome(_req, res) {
-  const [notices, books, resources, gallery, videos, events, faculty, syllabus] = await Promise.all([
+  const [notices, books, resources, gallery, videos, events, faculty, syllabus, instituteSetting] = await Promise.all([
     Notice.find({ audience: { $in: ["public", "all"] } }).sort("-createdAt").limit(5).lean(),
     Book.find({ isPublic: true, published: { $ne: false } }).sort("-isFeatured displayOrder -createdAt").limit(8).lean(),
     Resource.find({ isPublic: true, published: { $ne: false } }).sort("-isFeatured displayOrder -createdAt").limit(12).lean(),
@@ -10,9 +10,20 @@ export async function publicHome(_req, res) {
     Video.find({ showOnHome: true, published: true }).sort("-isFeatured displayOrder -createdAt").limit(4).lean(),
     Event.find({ audience: { $in: ["public", "all"] } }).sort("-date").limit(8).lean(),
     Faculty.find({ status: "active", isPublished: { $ne: false } }).populate("assignedSubjects", "name").sort("name").limit(12).lean(),
-    Syllabus.find({ isPublic: true, isPublished: { $ne: false } }).sort("-createdAt").limit(8).lean()
+    Syllabus.find({ isPublic: true, isPublished: { $ne: false } }).sort("-createdAt").limit(8).lean(),
+    Setting.findOne({ key: "institute" }).lean()
   ]);
-  res.json({ notices, books, resources, gallery, videos, events, faculty, syllabus });
+  res.json({
+    notices,
+    books,
+    resources,
+    gallery,
+    videos,
+    events,
+    faculty,
+    syllabus,
+    institute: instituteSetting?.value || {}
+  });
 }
 
 export async function publicList(req, res) {
@@ -32,6 +43,7 @@ export async function publicList(req, res) {
   const q = req.query.q;
   const filter = {};
   if (["books", "resources", "syllabus"].includes(req.params.resource)) filter.isPublic = true;
+  if (["books", "resources"].includes(req.params.resource)) filter.published = { $ne: false };
   if (req.params.resource === "syllabus") filter.isPublished = { $ne: false };
   if (req.params.resource === "faculty") filter.isPublished = { $ne: false };
   if (req.params.resource === "notices") filter.audience = { $in: ["public", "all"] };

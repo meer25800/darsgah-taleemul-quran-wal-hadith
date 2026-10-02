@@ -11,7 +11,7 @@ export function DashboardShell({ title, children }: { title: string; children: R
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Image src="/institute-logo.png" alt="Institute logo" width={72} height={72} className="rounded-full border-2 border-gold bg-white" />
+            <Image src="/institute-logo-official.png" alt="Institute logo" width={72} height={72} className="h-14 w-14 object-contain sm:h-[72px] sm:w-[72px]" />
             <div><h1 className="text-3xl font-black text-emeraldInk">{title}</h1><p className="text-palm">Live institute database portal</p></div>
           </div>
           <Button variant="outline" onClick={logout}>Logout</Button>

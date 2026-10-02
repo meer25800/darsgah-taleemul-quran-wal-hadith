@@ -5,6 +5,17 @@ import { signToken } from "../utils/tokens.js";
 const ADMIN_EMAIL = "aamirmir08@gmail.com";
 const otpStore = new Map();
 
+function sessionCookieOptions() {
+  const production = process.env.NODE_ENV === "production";
+  return {
+    httpOnly: true,
+    secure: production,
+    sameSite: process.env.COOKIE_SAME_SITE || (production ? "lax" : "lax"),
+    path: "/",
+    maxAge: Number(process.env.JWT_COOKIE_DAYS || 7) * 24 * 60 * 60 * 1000
+  };
+}
+
 function normalizeLogin(value = "") {
   return String(value).toLowerCase().trim().replace(/,/g, ".");
 }
@@ -53,8 +64,10 @@ export async function login(req, res) {
   }
   user.lastLoginAt = new Date();
   await user.save();
+  const token = signToken(user);
+  res.cookie("darsgah_token", token, sessionCookieOptions());
   res.json({
-    token: signToken(user),
+    token,
     user: { id: user._id, name: user.name, username: user.username, role: user.role, mustChangePassword: user.mustChangePassword },
     role: role === "admin" ? "admin" : user.role
   });
@@ -62,6 +75,11 @@ export async function login(req, res) {
 
 export async function me(req, res) {
   res.json({ user: req.user });
+}
+
+export function logout(_req, res) {
+  res.clearCookie("darsgah_token", sessionCookieOptions());
+  res.json({ message: "Logged out successfully" });
 }
 
 export async function forgotPasswordRequest(req, res) {

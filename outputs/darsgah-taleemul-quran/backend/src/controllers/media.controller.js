@@ -4,6 +4,7 @@ import { extractYouTubeVideoId, youtubeEmbedUrl, youtubeThumbnailUrl } from "../
 
 function videoPayload(body, user) {
   const id = extractYouTubeVideoId(body.youtubeUrl);
+  const displayOrder = Number(body.displayOrder ?? 0);
   if (!String(body.title || "").trim()) {
     const error = new Error("Video title is required");
     error.statusCode = 422;
@@ -14,18 +15,25 @@ function videoPayload(body, user) {
     error.statusCode = 422;
     throw error;
   }
+  if (!Number.isInteger(displayOrder) || displayOrder < 0) {
+    const error = new Error("Display order must be a non-negative whole number");
+    error.statusCode = 422;
+    throw error;
+  }
   return {
-    title: body.title,
+    title: String(body.title).trim(),
     videoType: body.videoType || "YouTube",
     youtubeVideoId: id,
     youtubeUrl: body.youtubeUrl,
     videoUrl: body.videoUrl,
     embedUrl: id ? youtubeEmbedUrl(id) : body.youtubeUrl,
     thumbnailUrl: id ? youtubeThumbnailUrl(id) : "",
-    description: body.description,
-    category: body.category,
+    description: String(body.description || "").trim(),
+    category: String(body.category || "Quran").trim(),
     duration: body.duration || "",
-    displayOrder: Number(body.displayOrder || 0),
+    displayOrder,
+    classId: body.classId || undefined,
+    subjectId: body.subjectId || undefined,
     isFeatured: body.isFeatured === true || body.isFeatured === "true" || body.isFeatured === "on",
     published: body.published !== false && body.published !== "false",
     showOnHome: body.showOnHome !== false && body.showOnHome !== "false",
